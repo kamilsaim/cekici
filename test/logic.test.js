@@ -27,3 +27,65 @@ test('detectPlatform: boş veya geçersiz string "unknown" döner', () => {
   assert.equal(detectPlatform(''), 'unknown');
   assert.equal(detectPlatform('not a url'), 'unknown');
 });
+
+import { createQueueItem, addToQueue, removeFromQueue, setItemMode, setItemQuality } from '../js/logic.js';
+
+test('createQueueItem: youtube linki için video modunda, 1080p varsayılan öğe oluşturur', () => {
+  const item = createQueueItem('https://youtu.be/abc123', 'Test Video');
+  assert.equal(item.platform, 'youtube');
+  assert.equal(item.title, 'Test Video');
+  assert.equal(item.mode, 'video');
+  assert.equal(item.quality, '1080p');
+  assert.equal(item.bitrate, null);
+  assert.ok(item.id);
+});
+
+test('addToQueue: yeni öğeyi kuyruğun sonuna ekler', () => {
+  const queue = [];
+  const item = createQueueItem('https://x.com/u/status/1', 'Klip');
+  const result = addToQueue(queue, item);
+  assert.equal(result.length, 1);
+  assert.equal(result[0].id, item.id);
+});
+
+test('removeFromQueue: id ile eşleşen öğeyi çıkarır', () => {
+  const a = createQueueItem('https://youtu.be/a', 'A');
+  const b = createQueueItem('https://youtu.be/b', 'B');
+  const queue = [a, b];
+  const result = removeFromQueue(queue, a.id);
+  assert.equal(result.length, 1);
+  assert.equal(result[0].id, b.id);
+});
+
+test('setItemMode: mode "audio" yapılınca bitrate 192kbps varsayılan atanır', () => {
+  const a = createQueueItem('https://youtu.be/a', 'A');
+  const queue = [a];
+  const result = setItemMode(queue, a.id, 'audio');
+  assert.equal(result[0].mode, 'audio');
+  assert.equal(result[0].bitrate, '192kbps');
+});
+
+test('setItemMode: mode "video" yapılınca bitrate null olur', () => {
+  const a = createQueueItem('https://youtu.be/a', 'A');
+  a.mode = 'audio';
+  a.bitrate = '320kbps';
+  const queue = [a];
+  const result = setItemMode(queue, a.id, 'video');
+  assert.equal(result[0].mode, 'video');
+  assert.equal(result[0].bitrate, null);
+});
+
+test('setItemQuality: video kalitesini günceller', () => {
+  const a = createQueueItem('https://youtu.be/a', 'A');
+  const queue = [a];
+  const result = setItemQuality(queue, a.id, '720p');
+  assert.equal(result[0].quality, '720p');
+});
+
+test("setItemQuality: audio modundayken bitrate'i günceller", () => {
+  const a = createQueueItem('https://youtu.be/a', 'A');
+  a.mode = 'audio';
+  const queue = [a];
+  const result = setItemQuality(queue, a.id, '320kbps');
+  assert.equal(result[0].bitrate, '320kbps');
+});
