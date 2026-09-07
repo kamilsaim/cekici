@@ -89,3 +89,38 @@ test("setItemQuality: audio modundayken bitrate'i günceller", () => {
   const result = setItemQuality(queue, a.id, '320kbps');
   assert.equal(result[0].bitrate, '320kbps');
 });
+
+import { groupByDate, filterByPlatform } from '../js/logic.js';
+
+test('filterByPlatform: "all" ise listeyi olduğu gibi döner', () => {
+  const items = [{ platform: 'youtube' }, { platform: 'x' }];
+  assert.equal(filterByPlatform(items, 'all').length, 2);
+});
+
+test('filterByPlatform: verilen platforma göre filtreler', () => {
+  const items = [{ platform: 'youtube' }, { platform: 'x' }, { platform: 'youtube' }];
+  const result = filterByPlatform(items, 'youtube');
+  assert.equal(result.length, 2);
+  assert.ok(result.every((i) => i.platform === 'youtube'));
+});
+
+test('groupByDate: bugünkü ve dünkü kayıtları ayrı gruplara koyar', () => {
+  const now = new Date('2026-09-07T18:00:00');
+  const today = new Date('2026-09-07T09:00:00').toISOString();
+  const yesterday = new Date('2026-09-06T20:00:00').toISOString();
+  const items = [
+    { id: '1', downloadedAt: today },
+    { id: '2', downloadedAt: yesterday },
+  ];
+  const groups = groupByDate(items, now);
+  assert.deepEqual(Object.keys(groups), ['Bugün', 'Dün']);
+  assert.equal(groups['Bugün'].length, 1);
+  assert.equal(groups['Dün'].length, 1);
+});
+
+test('groupByDate: 7 günden eski kayıt "Daha eski" grubuna girer', () => {
+  const now = new Date('2026-09-07T18:00:00');
+  const old = new Date('2026-08-01T09:00:00').toISOString();
+  const groups = groupByDate([{ id: '1', downloadedAt: old }], now);
+  assert.deepEqual(Object.keys(groups), ['Daha eski']);
+});

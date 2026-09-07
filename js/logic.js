@@ -51,3 +51,41 @@ export function setItemQuality(queue, id, value) {
     return item.mode === 'audio' ? { ...item, bitrate: value } : { ...item, quality: value };
   });
 }
+
+export function filterByPlatform(items, platform) {
+  if (platform === 'all') return items;
+  return items.filter((item) => item.platform === platform);
+}
+
+function startOfDay(date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+export function groupByDate(items, now = new Date()) {
+  const today = startOfDay(now);
+  const yesterday = today - 86400000;
+  const weekAgo = today - 6 * 86400000;
+
+  const groups = {};
+  const order = ['Bugün', 'Dün', 'Bu hafta', 'Daha eski'];
+
+  for (const item of items) {
+    const day = startOfDay(item.downloadedAt);
+    let label;
+    if (day === today) label = 'Bugün';
+    else if (day === yesterday) label = 'Dün';
+    else if (day >= weekAgo) label = 'Bu hafta';
+    else label = 'Daha eski';
+
+    if (!groups[label]) groups[label] = [];
+    groups[label].push(item);
+  }
+
+  const ordered = {};
+  for (const label of order) {
+    if (groups[label]) ordered[label] = groups[label];
+  }
+  return ordered;
+}
