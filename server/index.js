@@ -17,16 +17,20 @@ const DOWNLOADS_DIR = path.join(ROOT, 'downloads');
 const HISTORY_FILE = path.join(ROOT, 'data', 'history.json');
 const PORT = process.env.PORT || 3000;
 
-const COOKIES_FILE = [
-  process.env.COOKIES_FILE,
-  '/etc/secrets/cookies.txt',
-  path.join(ROOT, 'cookies.txt'),
-].filter(Boolean).find((p) => fs.existsSync(p)) || null;
+function prepareCookiesFile() {
+  const source = [
+    process.env.COOKIES_FILE,
+    '/etc/secrets/cookies.txt',
+    path.join(ROOT, 'cookies.txt'),
+  ].filter(Boolean).find((p) => fs.existsSync(p));
+  if (!source) return null;
 
-if (COOKIES_FILE) {
-  console.log(`yt-dlp cookies dosyası kullanılıyor: ${COOKIES_FILE}`);
-} else {
-  console.log('yt-dlp cookies dosyası bulunamadı, çerezsiz çalışılıyor.');
+  // yt-dlp cookie jar'ı her çalıştırmada geri yazmaya çalışır; Render'ın
+  // Secret File'ları salt-okunur olduğu için yazılabilir bir kopya kullanılır.
+  const writableCopy = path.join(ROOT, 'data', 'cookies-runtime.txt');
+  fs.mkdirSync(path.dirname(writableCopy), { recursive: true });
+  fs.copyFileSync(source, writableCopy);
+  return writableCopy;
 }
 
 function checkPrerequisite(cmd, versionFlag, installHint) {
@@ -42,6 +46,13 @@ checkPrerequisite('ffmpeg', '-version', 'winget install ffmpeg');
 
 fs.mkdirSync(DOWNLOADS_DIR, { recursive: true });
 fs.mkdirSync(path.dirname(HISTORY_FILE), { recursive: true });
+
+const COOKIES_FILE = prepareCookiesFile();
+if (COOKIES_FILE) {
+  console.log(`yt-dlp cookies dosyası kullanılıyor: ${COOKIES_FILE}`);
+} else {
+  console.log('yt-dlp cookies dosyası bulunamadı, çerezsiz çalışılıyor.');
+}
 
 const app = express();
 app.use(express.json());
