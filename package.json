@@ -6,5 +6,8 @@
   "scripts": {
     "test": "node --test test/*.test.js",
     "serve": "python -m http.server 8080"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
   }
 }
