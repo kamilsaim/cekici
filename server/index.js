@@ -17,6 +17,18 @@ const DOWNLOADS_DIR = path.join(ROOT, 'downloads');
 const HISTORY_FILE = path.join(ROOT, 'data', 'history.json');
 const PORT = process.env.PORT || 3000;
 
+const COOKIES_FILE = [
+  process.env.COOKIES_FILE,
+  '/etc/secrets/cookies.txt',
+  path.join(ROOT, 'cookies.txt'),
+].filter(Boolean).find((p) => fs.existsSync(p)) || null;
+
+if (COOKIES_FILE) {
+  console.log(`yt-dlp cookies dosyası kullanılıyor: ${COOKIES_FILE}`);
+} else {
+  console.log('yt-dlp cookies dosyası bulunamadı, çerezsiz çalışılıyor.');
+}
+
 function checkPrerequisite(cmd, versionFlag, installHint) {
   const result = spawnSync(cmd, [versionFlag]);
   if (result.error || result.status !== 0) {
@@ -54,7 +66,7 @@ async function processQueue() {
       bitrate: job.bitrate,
       outputTemplate,
     });
-    const resultPath = await runDownload(args, (pct) => jobStore.updateProgress(job.id, pct));
+    const resultPath = await runDownload(args, (pct) => jobStore.updateProgress(job.id, pct), COOKIES_FILE);
     const stats = fs.statSync(resultPath);
 
     const entry = {
@@ -90,7 +102,7 @@ app.post('/api/resolve', async (req, res) => {
     return res.status(400).json({ error: 'Desteklenmeyen veya geçersiz link.' });
   }
   try {
-    const info = await resolveInfo(url);
+    const info = await resolveInfo(url, COOKIES_FILE);
     res.json({ platform, title: info.title, thumbnail: info.thumbnail });
   } catch (err) {
     res.status(502).json({ error: err.message });

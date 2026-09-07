@@ -1,9 +1,10 @@
 import { spawn } from 'node:child_process';
 import { parseProgressLine } from './progress.js';
 
-export function resolveInfo(url) {
+export function resolveInfo(url, cookiesFile) {
   return new Promise((resolve, reject) => {
-    const proc = spawn('yt-dlp', ['--dump-json', '--no-playlist', url]);
+    const cookieArgs = cookiesFile ? ['--cookies', cookiesFile] : [];
+    const proc = spawn('yt-dlp', [...cookieArgs, '--dump-json', '--no-playlist', url]);
     let stdout = '';
     let stderr = '';
 
@@ -23,9 +24,10 @@ export function resolveInfo(url) {
   });
 }
 
-export function runDownload(args, onProgress) {
+export function runDownload(args, onProgress, cookiesFile) {
   return new Promise((resolve, reject) => {
-    const proc = spawn('yt-dlp', [...args, '--print', 'after_move:filepath']);
+    const cookieArgs = cookiesFile ? ['--cookies', cookiesFile] : [];
+    const proc = spawn('yt-dlp', [...cookieArgs, ...args, '--print', 'after_move:filepath']);
     let stderr = '';
     let buffer = '';
     let outputPath = '';
