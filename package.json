@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test test/*.test.js",
-    "serve": "python -m http.server 8080"
+    "test": "node --test test/*.test.js test/server/*.test.js",
+    "start": "node server/index.js"
   },
   "dependencies": {
     "express": "^5.2.1"
