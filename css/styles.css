@@ -213,3 +213,37 @@ body {
   cursor: pointer;
 }
 .history-actions button.delete-btn { flex: 0 0 30px; color: var(--text-muted-2); }
+
+.step-card {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 10px;
+}
+.step-num {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+  color: #fff;
+  font-weight: 800;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.step-title { font-size: 12px; font-weight: 700; color: var(--text-dark); }
+.step-desc { font-size: 10px; color: var(--text-muted-2); }
+.tip-box {
+  background: var(--chip-bg);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-size: 10px;
+  color: var(--accent-end);
+  margin: 8px 0 16px;
+}
