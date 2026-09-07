@@ -83,3 +83,96 @@ body {
 .nav-item .label { font-size: 10px; margin-top: 2px; }
 .nav-item.active { color: var(--accent-end); }
 .nav-item.active .label { font-weight: 700; }
+
+.add-link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card-bg);
+  border-radius: var(--radius-chip);
+  padding: 10px 12px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 12px;
+}
+.add-link-row input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 12px;
+  color: var(--text-dark);
+  background: transparent;
+}
+.add-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(90deg, var(--accent-start), var(--accent-end));
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.queue-card {
+  display: flex;
+  gap: 10px;
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 10px;
+}
+.queue-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: var(--chip-bg);
+  flex-shrink: 0;
+  position: relative;
+}
+.platform-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  color: #fff;
+  font-size: 8px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+.platform-badge.youtube { background: var(--yt-color); }
+.platform-badge.instagram { background: var(--ig-gradient); }
+.platform-badge.x { background: var(--x-color); }
+.platform-badge.unknown { background: #999; }
+
+.queue-body { flex: 1; }
+.queue-title { font-size: 11px; font-weight: 700; color: var(--text-dark); }
+.chip-row { display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap; }
+.chip {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 4px 7px;
+  border-radius: 8px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
+  color: var(--text-muted-2);
+  cursor: pointer;
+}
+.chip.active { background: var(--chip-active-bg); color: var(--chip-active-text); border-color: transparent; }
+.remove-btn { color: #d9c7cf; font-size: 14px; background: none; border: none; cursor: pointer; align-self: flex-start; }
+
+.primary-btn {
+  width: 100%;
+  background: linear-gradient(90deg, var(--accent-start), var(--accent-end));
+  border: none;
+  border-radius: 16px;
+  padding: 14px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: var(--shadow-accent);
+  cursor: pointer;
+  margin: 4px 0 16px;
+}
+.primary-btn:disabled { opacity: 0.5; cursor: not-allowed; }

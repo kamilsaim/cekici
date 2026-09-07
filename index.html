@@ -9,7 +9,19 @@
 <body>
   <div class="app-frame">
     <main>
-      <section id="screen-indir" class="screen active"></section>
+      <section id="screen-indir" class="screen active">
+        <h2 class="screen-title">İndirme Kuyruğu</h2>
+        <p class="screen-subtitle" id="queue-subtitle">0 video ekli · toplu indir</p>
+
+        <form id="add-link-form" class="add-link-row">
+          <input id="link-input" type="text" placeholder="🔗 Link yapıştır..." autocomplete="off" />
+          <button type="submit" class="add-btn">+</button>
+        </form>
+
+        <div id="queue-list"></div>
+
+        <button id="download-all-btn" class="primary-btn" disabled>Tümünü İndir (0) ⬇️</button>
+      </section>
       <section id="screen-gecmis" class="screen"></section>
       <section id="screen-howto" class="screen"></section>
       <section id="screen-ayarlar" class="screen"></section>
