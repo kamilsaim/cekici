@@ -73,7 +73,44 @@
 
         <div class="tip-box">💡 İpucu: Birden fazla link ekleyip "Tümünü İndir" ile toplu indirebilirsin.</div>
       </section>
-      <section id="screen-ayarlar" class="screen"></section>
+      <section id="screen-ayarlar" class="screen">
+        <h2 class="screen-title">Ayarlar</h2>
+        <p class="screen-subtitle">Uygulama tercihlerin</p>
+
+        <div class="settings-list">
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">İndirme konumu</div>
+              <div class="settings-value">Downloads/VideoIndirici</div>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-label">Varsayılan video kalitesi</div>
+            <select id="default-quality-select" class="settings-select">
+              <option value="1080p">1080p</option>
+              <option value="720p">720p</option>
+              <option value="480p">480p</option>
+            </select>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-label">Koyu tema</div>
+            <button id="theme-toggle" class="toggle-switch" role="switch" aria-checked="false"></button>
+          </div>
+
+          <div class="settings-row">
+            <button id="clear-history-btn" class="danger-btn">Geçmişi Temizle</button>
+          </div>
+
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">Hakkında</div>
+              <div class="settings-value">Video İndirici · v0.1.0</div>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
     <nav class="bottom-nav">
       <button class="nav-item active" data-target="screen-indir">

@@ -6,6 +6,7 @@ import {
   setItemQuality,
   groupByDate,
   filterByPlatform,
+  oppositeTheme,
 } from './logic.js';
 import { initialHistory } from './history-data.js';
 
@@ -171,3 +172,26 @@ document.querySelectorAll('.filter-chip').forEach((btn) => {
 });
 
 renderHistory();
+
+const themeToggle = document.getElementById('theme-toggle');
+let currentTheme = localStorage.getItem('theme') || 'light';
+
+function applyTheme(theme) {
+  currentTheme = theme;
+  document.documentElement.setAttribute('data-theme', theme);
+  themeToggle.setAttribute('aria-checked', String(theme === 'dark'));
+  localStorage.setItem('theme', theme);
+}
+
+themeToggle.addEventListener('click', () => applyTheme(oppositeTheme(currentTheme)));
+applyTheme(currentTheme);
+
+document.getElementById('clear-history-btn').addEventListener('click', () => {
+  history = [];
+  renderHistory();
+  alert('Geçmiş temizlendi.');
+});
+
+document.getElementById('default-quality-select').addEventListener('change', (e) => {
+  localStorage.setItem('defaultQuality', e.target.value);
+});
