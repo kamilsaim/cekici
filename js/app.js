@@ -4,7 +4,10 @@ import {
   removeFromQueue,
   setItemMode,
   setItemQuality,
+  groupByDate,
+  filterByPlatform,
 } from './logic.js';
+import { initialHistory } from './history-data.js';
 
 function initTabs() {
   const navItems = document.querySelectorAll('.nav-item');
@@ -105,3 +108,66 @@ document.getElementById('download-all-btn').addEventListener('click', () => {
 });
 
 renderQueue();
+
+let history = [...initialHistory];
+let activeFilter = 'all';
+
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  const count = document.getElementById('history-count');
+  const filtered = filterByPlatform(history, activeFilter);
+  count.textContent = `${filtered.length} indirme`;
+
+  const groups = groupByDate(filtered);
+  list.innerHTML = '';
+
+  for (const [label, items] of Object.entries(groups)) {
+    const groupLabel = document.createElement('div');
+    groupLabel.className = 'date-group-label';
+    groupLabel.textContent = label.toUpperCase();
+    list.appendChild(groupLabel);
+
+    for (const item of items) {
+      const card = document.createElement('div');
+      card.className = 'history-card';
+      card.innerHTML = `
+        <div class="history-top">
+          <div class="queue-thumb">
+            <span class="platform-badge ${item.platform}">${item.platform.slice(0, 2).toUpperCase()}</span>
+          </div>
+          <div>
+            <div class="history-title">${item.title}</div>
+            <div class="history-meta">${item.meta}</div>
+          </div>
+        </div>
+        <div class="history-actions">
+          <button class="play-btn">▶ Oynat</button>
+          <button class="share-btn">↗ Paylaş</button>
+          <button class="redownload-btn">↻ Tekrar</button>
+          <button class="delete-btn">🗑</button>
+        </div>
+      `;
+
+      card.querySelector('.play-btn').addEventListener('click', () => alert(`Oynatılıyor: ${item.title}`));
+      card.querySelector('.share-btn').addEventListener('click', () => alert(`Paylaşılıyor: ${item.title}`));
+      card.querySelector('.redownload-btn').addEventListener('click', () => alert(`Tekrar indiriliyor: ${item.title}`));
+      card.querySelector('.delete-btn').addEventListener('click', () => {
+        history = history.filter((h) => h.id !== item.id);
+        renderHistory();
+      });
+
+      list.appendChild(card);
+    }
+  }
+}
+
+document.querySelectorAll('.filter-chip').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-chip').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.platform;
+    renderHistory();
+  });
+});
+
+renderHistory();

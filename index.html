@@ -22,7 +22,19 @@
 
         <button id="download-all-btn" class="primary-btn" disabled>Tümünü İndir (0) ⬇️</button>
       </section>
-      <section id="screen-gecmis" class="screen"></section>
+      <section id="screen-gecmis" class="screen">
+        <h2 class="screen-title">Geçmiş</h2>
+        <p class="screen-subtitle" id="history-count">0 indirme</p>
+
+        <div class="chip-row filter-row" id="platform-filter">
+          <button class="chip filter-chip active" data-platform="all">Tümü</button>
+          <button class="chip filter-chip" data-platform="youtube">▶ YouTube</button>
+          <button class="chip filter-chip" data-platform="instagram">📷 Instagram</button>
+          <button class="chip filter-chip" data-platform="x">𝕏</button>
+        </div>
+
+        <div id="history-list"></div>
+      </section>
       <section id="screen-howto" class="screen"></section>
       <section id="screen-ayarlar" class="screen"></section>
     </main>

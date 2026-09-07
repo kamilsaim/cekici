@@ -176,3 +176,40 @@ body {
   margin: 4px 0 16px;
 }
 .primary-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.filter-row { margin-bottom: 10px; }
+.filter-chip { border-radius: 16px; }
+.filter-chip.active { background: var(--text-dark); color: #fff; border-color: transparent; }
+
+.date-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted-2);
+  margin: 10px 0 4px;
+}
+
+.history-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 8px;
+}
+.history-card .queue-thumb { width: 50px; height: 50px; }
+.history-top { display: flex; gap: 10px; }
+.history-title { font-size: 11px; font-weight: 700; color: var(--text-dark); }
+.history-meta { font-size: 9px; color: var(--text-muted-2); margin-top: 2px; }
+.history-actions { display: flex; gap: 6px; margin-top: 8px; }
+.history-actions button {
+  flex: 1;
+  text-align: center;
+  background: var(--chip-bg);
+  color: var(--accent-end);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 6px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+.history-actions button.delete-btn { flex: 0 0 30px; color: var(--text-muted-2); }
