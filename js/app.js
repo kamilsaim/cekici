@@ -29,6 +29,24 @@ let queue = [];
 const VIDEO_QUALITIES = ['1080p', '720p', '480p'];
 const AUDIO_BITRATES = ['128kbps', '192kbps', '320kbps'];
 
+async function resolveTitle(item) {
+  try {
+    const res = await fetch('/api/resolve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: item.url }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Link çözümlenemedi');
+    item.title = data.title;
+    item.platform = data.platform;
+    item.resolveError = null;
+  } catch (err) {
+    item.resolveError = err.message;
+  }
+  renderQueue();
+}
+
 function renderQueue() {
   const list = document.getElementById('queue-list');
   const subtitle = document.getElementById('queue-subtitle');
@@ -36,7 +54,7 @@ function renderQueue() {
 
   subtitle.textContent = `${queue.length} video ekli · toplu indir`;
   downloadBtn.textContent = `Tümünü İndir (${queue.length}) ⬇️`;
-  downloadBtn.disabled = queue.length === 0;
+  downloadBtn.disabled = queue.length === 0 || queue.some((i) => i.jobStatus === 'downloading');
 
   list.innerHTML = '';
   for (const item of queue) {
@@ -45,6 +63,7 @@ function renderQueue() {
 
     const qualityOptions = item.mode === 'audio' ? AUDIO_BITRATES : VIDEO_QUALITIES;
     const activeValue = item.mode === 'audio' ? item.bitrate : item.quality;
+    const locked = item.jobStatus === 'downloading' || item.jobStatus === 'completed';
 
     card.innerHTML = `
       <div class="queue-thumb">
@@ -53,19 +72,27 @@ function renderQueue() {
       <div class="queue-body">
         <div class="queue-title">${item.title}</div>
         <div class="chip-row mode-row">
-          <button class="chip mode-chip ${item.mode === 'video' ? 'active' : ''}" data-mode="video">Video</button>
-          <button class="chip mode-chip ${item.mode === 'audio' ? 'active' : ''}" data-mode="audio">🎵 Ses</button>
+          <button class="chip mode-chip ${item.mode === 'video' ? 'active' : ''}" data-mode="video" ${locked ? 'disabled' : ''}>Video</button>
+          <button class="chip mode-chip ${item.mode === 'audio' ? 'active' : ''}" data-mode="audio" ${locked ? 'disabled' : ''}>🎵 Ses</button>
         </div>
         <div class="chip-row quality-row">
           ${qualityOptions
             .map(
               (q) =>
-                `<button class="chip quality-chip ${q === activeValue ? 'active' : ''}" data-value="${q}">${q}</button>`
+                `<button class="chip quality-chip ${q === activeValue ? 'active' : ''}" data-value="${q}" ${locked ? 'disabled' : ''}>${q}</button>`
             )
             .join('')}
         </div>
+        ${
+          item.jobStatus === 'downloading' || item.jobStatus === 'completed'
+            ? `<div class="progress-track"><div class="progress-fill" style="width:${item.jobProgress ?? 0}%"></div></div>
+               <div class="queue-status">${item.jobStatus === 'completed' ? 'Tamamlandı ✓' : `%${item.jobProgress ?? 0}`}</div>`
+            : ''
+        }
+        ${item.jobStatus === 'failed' ? `<div class="queue-error">Hata: ${item.jobError}</div>` : ''}
+        ${item.resolveError ? `<div class="queue-error">${item.resolveError}</div>` : ''}
       </div>
-      <button class="remove-btn" data-id="${item.id}">✕</button>
+      <button class="remove-btn" data-id="${item.id}" ${item.jobStatus === 'downloading' ? 'disabled' : ''}>✕</button>
     `;
 
     card.querySelector('.remove-btn').addEventListener('click', () => {
@@ -100,11 +127,48 @@ document.getElementById('add-link-form').addEventListener('submit', (e) => {
   queue = addToQueue(queue, item);
   input.value = '';
   renderQueue();
+  resolveTitle(item);
 });
 
-document.getElementById('download-all-btn').addEventListener('click', () => {
-  alert(`${queue.length} video indiriliyor... (simülasyon)`);
-  queue = [];
+async function pollJob(item) {
+  const res = await fetch(`/api/downloads/${item.jobId}`);
+  const job = await res.json();
+  item.jobStatus = job.status;
+  item.jobProgress = job.progress;
+  item.jobError = job.error;
+  renderQueue();
+
+  if (job.status === 'completed') {
+    await loadHistory();
+    queue = removeFromQueue(queue, item.id);
+    renderQueue();
+    return;
+  }
+  if (job.status === 'failed') return;
+  setTimeout(() => pollJob(item), 1000);
+}
+
+document.getElementById('download-all-btn').addEventListener('click', async () => {
+  for (const item of queue) {
+    if (item.jobId) continue;
+    const res = await fetch('/api/downloads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url: item.url,
+        title: item.title,
+        platform: item.platform,
+        mode: item.mode,
+        quality: item.quality,
+        bitrate: item.bitrate,
+      }),
+    });
+    const data = await res.json();
+    item.jobId = data.jobId;
+    item.jobStatus = 'queued';
+    item.jobProgress = 0;
+    pollJob(item);
+  }
   renderQueue();
 });
 
