@@ -7,8 +7,8 @@ import {
   groupByDate,
   filterByPlatform,
   oppositeTheme,
+  formatSize,
 } from './logic.js';
-import { initialHistory } from './history-data.js';
 
 function initTabs() {
   const navItems = document.querySelectorAll('.nav-item');
@@ -174,8 +174,19 @@ document.getElementById('download-all-btn').addEventListener('click', async () =
 
 renderQueue();
 
-let history = [...initialHistory];
+let history = [];
 let activeFilter = 'all';
+
+async function loadHistory() {
+  const res = await fetch('/api/history');
+  history = await res.json();
+  renderHistory();
+}
+
+function metaFor(entry) {
+  const quality = entry.mode === 'audio' ? `🎵 ${entry.bitrate}` : entry.quality;
+  return `${quality} · ${formatSize(entry.sizeBytes)}`;
+}
 
 function renderHistory() {
   const list = document.getElementById('history-list');
@@ -202,7 +213,7 @@ function renderHistory() {
           </div>
           <div>
             <div class="history-title">${item.title}</div>
-            <div class="history-meta">${item.meta}</div>
+            <div class="history-meta">${metaFor(item)}</div>
           </div>
         </div>
         <div class="history-actions">
@@ -213,12 +224,42 @@ function renderHistory() {
         </div>
       `;
 
-      card.querySelector('.play-btn').addEventListener('click', () => alert(`Oynatılıyor: ${item.title}`));
-      card.querySelector('.share-btn').addEventListener('click', () => alert(`Paylaşılıyor: ${item.title}`));
-      card.querySelector('.redownload-btn').addEventListener('click', () => alert(`Tekrar indiriliyor: ${item.title}`));
-      card.querySelector('.delete-btn').addEventListener('click', () => {
-        history = history.filter((h) => h.id !== item.id);
-        renderHistory();
+      card.querySelector('.play-btn').addEventListener('click', () => {
+        window.open(`/api/history/${item.id}/file`, '_blank');
+      });
+
+      card.querySelector('.share-btn').addEventListener('click', async () => {
+        const fileUrl = `${window.location.origin}/api/history/${item.id}/file`;
+        if (navigator.share) {
+          try {
+            await navigator.share({ title: item.title, url: fileUrl });
+          } catch {
+            /* kullanıcı paylaşımı iptal etti */
+          }
+        } else {
+          window.open(fileUrl, '_blank');
+        }
+      });
+
+      card.querySelector('.redownload-btn').addEventListener('click', async () => {
+        await fetch('/api/downloads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: item.url,
+            title: item.title,
+            platform: item.platform,
+            mode: item.mode,
+            quality: item.quality,
+            bitrate: item.bitrate,
+          }),
+        });
+        alert("Tekrar indirme kuyruğa alındı. Birazdan Geçmiş'te görünecek.");
+      });
+
+      card.querySelector('.delete-btn').addEventListener('click', async () => {
+        await fetch(`/api/history/${item.id}`, { method: 'DELETE' });
+        await loadHistory();
       });
 
       list.appendChild(card);
@@ -235,7 +276,7 @@ document.querySelectorAll('.filter-chip').forEach((btn) => {
   });
 });
 
-renderHistory();
+loadHistory();
 
 const themeToggle = document.getElementById('theme-toggle');
 let currentTheme = localStorage.getItem('theme') || 'light';
