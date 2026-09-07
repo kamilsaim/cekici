@@ -131,3 +131,17 @@ test('oppositeTheme: light -> dark, dark -> light', () => {
   assert.equal(oppositeTheme('light'), 'dark');
   assert.equal(oppositeTheme('dark'), 'light');
 });
+
+import { formatSize } from '../js/logic.js';
+
+test('formatSize: byte cinsinden küçük değerleri "B" ile gösterir', () => {
+  assert.equal(formatSize(500), '500 B');
+});
+
+test('formatSize: KB aralığını "KB" ile gösterir', () => {
+  assert.equal(formatSize(1536), '1.5 KB');
+});
+
+test('formatSize: MB aralığını "MB" ile gösterir', () => {
+  assert.equal(formatSize(3 * 1024 * 1024), '3.0 MB');
+});
