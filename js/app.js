@@ -10,6 +10,14 @@ import {
   formatSize,
 } from './logic.js';
 
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      /* PWA kurulumu opsiyonel, hata sessizce yutulur */
+    });
+  });
+}
+
 function initTabs() {
   const navItems = document.querySelectorAll('.nav-item');
   navItems.forEach((btn) => {
