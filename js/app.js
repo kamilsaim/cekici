@@ -291,12 +291,18 @@ function applyTheme(theme) {
 themeToggle.addEventListener('click', () => applyTheme(oppositeTheme(currentTheme)));
 applyTheme(currentTheme);
 
-document.getElementById('clear-history-btn').addEventListener('click', () => {
-  history = [];
-  renderHistory();
+document.getElementById('clear-history-btn').addEventListener('click', async () => {
+  await fetch('/api/history', { method: 'DELETE' });
+  await loadHistory();
   alert('Geçmiş temizlendi.');
 });
 
 document.getElementById('default-quality-select').addEventListener('change', (e) => {
   localStorage.setItem('defaultQuality', e.target.value);
 });
+
+fetch('/api/config')
+  .then((res) => res.json())
+  .then((config) => {
+    document.querySelector('.settings-value').textContent = config.downloadsPath;
+  });
