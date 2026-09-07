@@ -124,3 +124,10 @@ test('groupByDate: 7 günden eski kayıt "Daha eski" grubuna girer', () => {
   const groups = groupByDate([{ id: '1', downloadedAt: old }], now);
   assert.deepEqual(Object.keys(groups), ['Daha eski']);
 });
+
+import { oppositeTheme } from '../js/logic.js';
+
+test('oppositeTheme: light -> dark, dark -> light', () => {
+  assert.equal(oppositeTheme('light'), 'dark');
+  assert.equal(oppositeTheme('dark'), 'light');
+});

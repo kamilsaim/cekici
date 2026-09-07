@@ -89,3 +89,7 @@ export function groupByDate(items, now = new Date()) {
   }
   return ordered;
 }
+
+export function oppositeTheme(theme) {
+  return theme === 'dark' ? 'light' : 'dark';
+}
