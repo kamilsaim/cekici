@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cekici-shell-v1';
+const CACHE_NAME = 'cekici-shell-v2';
 const SHELL_FILES = [
   '/',
   '/index.html',
@@ -26,9 +26,21 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// stale-while-revalidate: önbellekten anında servis et, arka planda tazele.
+// Böylece deploy edilen CSS/JS değişiklikleri en geç bir sonraki açılışta görünür.
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET' || event.request.url.includes('/api/')) return;
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.match(event.request).then((cached) => {
+        const network = fetch(event.request)
+          .then((response) => {
+            if (response && response.ok) cache.put(event.request, response.clone());
+            return response;
+          })
+          .catch(() => cached);
+        return cached || network;
+      })
+    )
   );
 });
