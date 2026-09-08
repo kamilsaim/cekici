@@ -309,8 +309,33 @@ document.getElementById('default-quality-select').addEventListener('change', (e)
   localStorage.setItem('defaultQuality', e.target.value);
 });
 
-fetch('/api/config')
+const downloadDirValue = document.getElementById('download-dir-value');
+const chooseFolderBtn = document.getElementById('choose-folder-btn');
+
+function renderDownloadDir(settings) {
+  downloadDirValue.textContent = settings.downloadDir;
+}
+
+fetch('/api/settings')
   .then((res) => res.json())
-  .then((config) => {
-    document.querySelector('.settings-value').textContent = config.downloadsPath;
-  });
+  .then(renderDownloadDir)
+  .catch(() => { downloadDirValue.textContent = 'Okunamadı'; });
+
+// Klasor penceresi sunucu tarafinda aciliyor: tarayici sayfasi gercek bir
+// dosya sistemi yolu veremez. Pencere acikken istek bekler, bu yuzden butonu
+// kilitliyoruz.
+chooseFolderBtn.addEventListener('click', async () => {
+  chooseFolderBtn.disabled = true;
+  chooseFolderBtn.textContent = 'Seçiliyor...';
+  try {
+    const res = await fetch('/api/choose-folder', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Klasör seçilemedi.');
+    renderDownloadDir(data);
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    chooseFolderBtn.disabled = false;
+    chooseFolderBtn.textContent = 'Değiştir';
+  }
+});

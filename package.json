@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "node --test test/*.test.js test/server/*.test.js",
-    "start": "node server/index.js"
+    "start": "node server/index.js",
+    "build:desktop": "node tools/build-desktop.mjs"
   },
   "dependencies": {
     "express": "^5.2.1"

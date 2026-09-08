@@ -1,13 +1,20 @@
 import { spawn } from 'node:child_process';
 import { parseProgressLine } from './progress.js';
 
-export function resolveInfo(url, cookiesFile) {
+// Paketlenmiş dağıtımda yt-dlp ve ffmpeg uygulamanın yanında gömülü gelir, o
+// yüzden çalıştırılabilir yolları dışarıdan geçiliyor. Verilmezse PATH'teki
+// isimlere düşer ve geliştirme ortamı bugünkü gibi çalışır.
+function baseArgs({ cookiesFile, ffmpegPath }) {
+  return [
+    ...(cookiesFile ? ['--cookies', cookiesFile] : []),
+    ...(ffmpegPath ? ['--ffmpeg-location', ffmpegPath] : []),
+    '--remote-components', 'ejs:github',
+  ];
+}
+
+export function resolveInfo(url, { cookiesFile, ytdlpPath = 'yt-dlp', ffmpegPath } = {}) {
   return new Promise((resolve, reject) => {
-    const baseArgs = [
-      ...(cookiesFile ? ['--cookies', cookiesFile] : []),
-      '--remote-components', 'ejs:github',
-    ];
-    const proc = spawn('yt-dlp', [...baseArgs, '--dump-json', '--no-playlist', url]);
+    const proc = spawn(ytdlpPath, [...baseArgs({ cookiesFile, ffmpegPath }), '--dump-json', '--no-playlist', url]);
     let stdout = '';
     let stderr = '';
 
@@ -27,13 +34,9 @@ export function resolveInfo(url, cookiesFile) {
   });
 }
 
-export function runDownload(args, onProgress, cookiesFile) {
+export function runDownload(args, onProgress, { cookiesFile, ytdlpPath = 'yt-dlp', ffmpegPath } = {}) {
   return new Promise((resolve, reject) => {
-    const baseArgs = [
-      ...(cookiesFile ? ['--cookies', cookiesFile] : []),
-      '--remote-components', 'ejs:github',
-    ];
-    const proc = spawn('yt-dlp', [...baseArgs, ...args, '--print', 'after_move:filepath']);
+    const proc = spawn(ytdlpPath, [...baseArgs({ cookiesFile, ffmpegPath }), ...args, '--print', 'after_move:filepath']);
     let stderr = '';
     let buffer = '';
     let outputPath = '';
@@ -59,6 +62,28 @@ export function runDownload(args, onProgress, cookiesFile) {
       if (code !== 0) return reject(new Error(stderr.trim() || `yt-dlp exited with code ${code}`));
       if (!outputPath) return reject(new Error('İndirilen dosyanın yolu belirlenemedi'));
       resolve(outputPath);
+    });
+  });
+}
+
+/**
+ * Gömülü yt-dlp'yi kendi kendine günceller. YouTube sık değiştiği için sabit
+ * bir kopya birkaç ay içinde bozulur; bu sayede arkadaşlara yeni paket
+ * göndermek gerekmez. Başarısız olursa sessizce yok sayılır (internet yok,
+ * dosya kilitli, izin yok gibi durumlar uygulamayı engellememeli).
+ */
+export function selfUpdateYtdlp(ytdlpPath, log = console.log) {
+  return new Promise((resolve) => {
+    const proc = spawn(ytdlpPath, ['-U']);
+    let out = '';
+    proc.stdout.on('data', (c) => (out += c));
+    proc.stderr.on('data', (c) => (out += c));
+    proc.on('error', () => resolve(false));
+    proc.on('close', (code) => {
+      if (code === 0 && /Updated|up to date|up-to-date/i.test(out)) {
+        log(`yt-dlp güncelleme kontrolü: ${out.trim().split('\n').pop()}`);
+      }
+      resolve(code === 0);
     });
   });
 }

@@ -290,6 +290,23 @@ body {
 }
 .settings-label { font-size: 12px; font-weight: 700; color: var(--text-dark); }
 .settings-value { font-size: 10px; color: var(--text-muted-2); margin-top: 2px; }
+/* Uzun Windows yollari satiri tasirmasin */
+.settings-row-text { min-width: 0; flex: 1; }
+.settings-row-text .settings-value { overflow-wrap: anywhere; }
+.settings-btn {
+  flex-shrink: 0;
+  margin-left: 10px;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+  color: var(--accent-end);
+  background: var(--chip-bg);
+  cursor: pointer;
+}
+.settings-btn:disabled { opacity: 0.5; cursor: default; }
 .settings-select {
   border: 1px solid var(--border-light);
   border-radius: 10px;

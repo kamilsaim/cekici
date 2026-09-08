@@ -9,9 +9,11 @@ npm test                          # run all unit tests (frontend logic.js + all 
 node --test test/logic.test.js    # run only the frontend logic tests
 node --test test/server/jobs.test.js   # run a single server test file
 npm start                         # run the Express server locally on :3000 (serves frontend + API)
+npm run build:desktop             # build dist/cekici.zip, the Windows package sent to end users
 ```
 
-No build step — plain ES modules served/consumed directly. No linter configured.
+No build step for the app itself — plain ES modules served/consumed directly. No linter configured.
+`build:desktop` is packaging only (downloads Node/ffmpeg/yt-dlp, zips them with the app); it does not compile anything.
 
 ### Local prerequisites
 
@@ -35,7 +37,10 @@ This is a video downloader (YouTube/Instagram/X) with two independent halves tha
   - `history.js` — CRUD over `data/history.json`, file path passed as an argument (never hardcoded) so tests use temp files.
   - `ytdlp-args.js` — pure function building the yt-dlp CLI argument array from `{mode, quality, bitrate}`.
   - `progress.js` — pure regex parser turning a yt-dlp `--newline` progress line into a percentage.
-  - `ytdlp-runner.js` — the only file that actually spawns `yt-dlp` (`resolveInfo`, `runDownload`). Not unit tested; verify manually against a real URL when touching it.
+  - `ytdlp-runner.js` — the only file that actually spawns `yt-dlp` (`resolveInfo`, `runDownload`, `selfUpdateYtdlp`). Takes `{cookiesFile, ytdlpPath, ffmpegPath}` so the packaged build can point at bundled binaries. Not unit tested; verify manually against a real URL when touching it.
+  - `paths.js` — pure. `resolveBinary()` prefers a bundled `bin/` copy and falls back to the bare PATH name, which is what keeps `npm start` working during development.
+  - `settings.js` — CRUD over `data/settings.json` (currently just `downloadDir`), file path passed in like `history.js`. `resolveDownloadDir()` falls back to the default if the chosen folder has been moved or deleted.
+  - `folder-picker.js` — opens the native Windows folder dialog via PowerShell. A browser page cannot hand the server a real filesystem path, so the picker has to run server-side. Windows-only, no unit test.
 
 **Test strategy**: every pure module above has a matching `node:test` file. IO-heavy code (`ytdlp-runner.js`, the Express routes themselves) is deliberately left untested and instead verified with real `curl`/`yt-dlp` calls — don't try to unit-test process spawning here, follow the existing split.
 
@@ -44,9 +49,9 @@ This is a video downloader (YouTube/Instagram/X) with two independent halves tha
 1. Frontend POSTs a link to `/api/resolve` → server runs `yt-dlp --dump-json` (via `ytdlp-runner.resolveInfo`) to get the real title/thumbnail.
 2. Frontend POSTs `{url, mode, quality|bitrate}` to `/api/downloads` → `jobStore.createJob()` queues it, `processQueue()` (sequential, one job at a time) eventually runs it.
 3. Frontend polls `GET /api/downloads/:jobId` every second for `{status, progress}` until `completed`/`failed`.
-4. On completion the file lands in `downloads/` and a row is appended to `data/history.json` (via `history.js`); the frontend then re-fetches `/api/history`.
+4. On completion the file lands in the user's chosen download folder (default: Windows Downloads) and a row is appended to `data/history.json` (via `history.js`); the frontend then re-fetches `/api/history`. History rows store the **full `filePath`**, not just a filename, so entries survive the user changing the download folder later.
 
-`downloads/` and `data/` are gitignored — on Render's free tier they are **not persistent** across restarts/redeploys.
+`downloads/`, `data/` and `dist/` are gitignored.
 
 ### YouTube-specific fragility
 
@@ -56,8 +61,26 @@ YouTube aggressively blocks datacenter/cloud IPs. The current mitigations (all i
 - `--remote-components ejs:github` is always passed so `yt-dlp` can fetch its JS "n-challenge" solver (requires `deno`, installed in the `Dockerfile`).
 - Cookies **do go stale** ("cookies no longer valid... rotated") if the source account keeps browsing YouTube in its normal browser after export — re-export and re-upload to the Render Secret File when this happens. Instagram/X don't have this problem.
 
-### PWA / deploy shape
+### Distribution shape
 
-- Same-origin design on purpose: `server/index.js` serves the static frontend (`express.static(ROOT)`) *and* the `/api/*` routes from one Express app — no separate frontend host, no CORS. `manifest.json`, `sw.js`, and `icons/` are plain static files picked up automatically by that same static middleware.
-- Deployed on Render as a Docker web service (`Dockerfile` + `render.yaml`), auto-deploying on every push to `master`. The Dockerfile installs `python3`/`pip`/`yt-dlp`/`ffmpeg`/`deno` on top of `node:20-slim` — if you add a new external tool the download logic needs, it has to be added there too.
-- `.app-frame` in `css/styles.css` is a fixed 375×720 "phone mockup" card on desktop, but a `@media (max-width: 480px)` override makes it fill the real viewport (`100dvh`, no radius/shadow) on actual phones — don't remove that override when touching layout CSS.
+**The app now ships as a Windows ZIP that users run on their own PC, not as a hosted service.**
+Render hosting was abandoned because its free tier caused three problems at once: datacenter IPs
+tripped YouTube's bot check, 512MB RAM couldn't fit a PO-token provider, and the disk wasn't
+persistent. On a home PC all three disappear — no cookies, no PO token, downloads persist.
+See `docs/superpowers/specs/2026-09-08-masaustu-dagitim-design.md` (gitignored, local only).
+
+- `tools/build-desktop.mjs` (`npm run build:desktop`) produces `dist/cekici.zip`:
+  `node.exe`, `bin/{ffmpeg,yt-dlp}.exe`, `app/` and a `baslat.bat` launcher. Everything is
+  bundled so the recipient installs nothing. Downloads are cached in `dist/.cache`.
+- `baslat.bat` sets `CEKICI_OPEN_BROWSER=1` (auto-opens the browser) and `CEKICI_BIN_DIR`.
+  Neither is set during `npm start`, so development behaviour is unchanged.
+- Bundled `yt-dlp` self-updates at startup (`selfUpdateYtdlp`) — YouTube changes often and a
+  frozen copy would break within months. A **system** yt-dlp is never auto-updated.
+- Same-origin design on purpose: `server/index.js` serves the static frontend (`express.static(ROOT)`)
+  *and* the `/api/*` routes from one Express app — no separate frontend host, no CORS.
+- `.app-frame` in `css/styles.css` is a fixed 375×720 "phone mockup" card on desktop, but a
+  `@media (max-width: 480px)` override makes it fill the real viewport (`100dvh`, no radius/shadow)
+  on actual phones — don't remove that override when touching layout CSS.
+- `Dockerfile`, `render.yaml` and `server/pot-provider.js` are **leftovers from the Render era**.
+  They self-disable off-Render (the provider's entry file simply doesn't exist), so they are
+  harmless, but nothing depends on them any more.
