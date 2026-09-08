@@ -65,13 +65,25 @@ body {
 }
 
 @media (max-width: 480px) {
-  body { padding: 0; }
+  html, body {
+    height: 100%;
+    /* lastik bandi kaydirmasi alt nav'i viewport disina itiyordu */
+    overscroll-behavior-y: none;
+  }
+  body {
+    padding: 0;
+    /* centik seridi page-bg yerine uygulama gradyaniyla boyansin */
+    background: linear-gradient(180deg, var(--bg-grad-start), var(--bg-grad-end));
+  }
   .app-frame {
     width: 100%;
     height: 100vh;
     height: 100dvh;
     border-radius: 0;
     box-shadow: none;
+    /* icerik centigin altindan baslasin (box-sizing: border-box sayesinde
+       toplam yukseklik 100dvh olarak kalir) */
+    padding-top: env(safe-area-inset-top);
   }
 }
 
