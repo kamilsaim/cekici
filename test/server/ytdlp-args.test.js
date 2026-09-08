@@ -20,7 +20,7 @@ test('buildDownloadArgs: video modunda yükseklik sınırlı format seçer', () 
     outputTemplate: 'out/%(title)s.%(ext)s',
   });
   assert.ok(args.includes('-f'));
-  assert.ok(args.includes('bestvideo[height<=720]+bestaudio/best[height<=720]'));
+  assert.ok(args.includes('bestvideo[height<=720]+bestaudio/best[height<=720]/best'));
   assert.ok(args.includes('--merge-output-format'));
   assert.ok(args.includes('mp4'));
   assert.equal(args.at(-1), 'https://youtu.be/abc');
@@ -51,4 +51,18 @@ test('buildDownloadArgs: her zaman --newline ve -o içerir', () => {
   const oIndex = args.indexOf('-o');
   assert.ok(oIndex !== -1);
   assert.equal(args[oIndex + 1], 'out/%(title)s.%(ext)s');
+});
+
+test('buildDownloadArgs: format zinciri koşulsuz bir yedekle biter', () => {
+  // Instagram/X formatlarında çoğu zaman "height" alanı yok; height<=N
+  // filtreleri hepsini eleyince yt-dlp "Requested format is not available"
+  // hatası veriyordu. Zincirin sonunda her zaman çıplak "best" olmalı.
+  const args = buildDownloadArgs({
+    url: 'https://www.instagram.com/reel/DdBqCzkguSC/',
+    mode: 'video',
+    quality: '720p',
+    outputTemplate: 'out/%(title)s.%(ext)s',
+  });
+  const selector = args[args.indexOf('-f') + 1];
+  assert.ok(selector.endsWith('/best'), `zincir çıplak "best" ile bitmeli, gelen: ${selector}`);
 });

@@ -15,7 +15,11 @@ export function buildDownloadArgs({ url, mode, quality, bitrate, outputTemplate 
     args.push('-x', '--audio-format', 'mp3', '--audio-quality', bitrateToYtdlpQuality(bitrate));
   } else {
     const height = quality.replace('p', '');
-    args.push('-f', `bestvideo[height<=${height}]+bestaudio/best[height<=${height}]`, '--merge-output-format', 'mp4');
+    // Son basamak kosulsuz: Instagram/X formatlarinda cogu zaman "height"
+    // alani bulunmadigi icin height<=N filtreleri hepsini eliyor ve
+    // yt-dlp "Requested format is not available" ile basarisiz oluyordu.
+    const selector = `bestvideo[height<=${height}]+bestaudio/best[height<=${height}]/best`;
+    args.push('-f', selector, '--merge-output-format', 'mp4');
   }
 
   args.push(url);
