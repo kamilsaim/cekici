@@ -9,6 +9,7 @@ import { createJobStore } from './jobs.js';
 import { readHistory, addHistoryEntry, deleteHistoryEntry, clearHistoryFile } from './history.js';
 import { resolveInfo, runDownload } from './ytdlp-runner.js';
 import { buildDownloadArgs } from './ytdlp-args.js';
+import { startPotProvider } from './pot-provider.js';
 import { detectPlatform } from '../js/logic.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -53,6 +54,10 @@ if (COOKIES_FILE) {
 } else {
   console.log('yt-dlp cookies dosyası bulunamadı, çerezsiz çalışılıyor.');
 }
+
+// YouTube'un bot kontrolü için PO token üreticisi; hata verirse uygulama
+// yine de açılır, sadece YouTube indirmeleri cookies'e bağımlı kalır.
+await startPotProvider();
 
 const app = express();
 app.use(express.json());
